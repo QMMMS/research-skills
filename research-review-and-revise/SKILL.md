@@ -1,6 +1,6 @@
 ---
 name: research-review-and-revise
-description: Review and revision workflow for research drafts, literature reviews, and survey writing. Use when the user wants critique, gap detection, citation checking, or a structured revision pass.
+description: Review and revision workflow for research drafts, literature reviews, and survey writing. Use when Codex needs critique, coverage-gap detection, corpus adequacy checks, citation checking, or a structured revision pass.
 ---
 
 # Research Review And Revise
@@ -19,12 +19,13 @@ Typical triggers:
 Run review in this order:
 
 1. Scope alignment
-2. Coverage
-3. Structure
-4. Grounding and citation support
-5. Overclaiming and unsupported synthesis
-6. Clarity and redundancy
-7. Revision plan
+2. Corpus adequacy
+3. Coverage
+4. Structure
+5. Grounding and citation support
+6. Overclaiming and unsupported synthesis
+7. Clarity and redundancy
+8. Revision plan
 
 Keep findings concrete and revision-oriented.
 
@@ -33,6 +34,7 @@ Keep findings concrete and revision-oriented.
 Prefer a review note file such as `review_notes.md` with:
 
 - major issues
+- corpus weaknesses
 - missing evidence
 - duplicated sections
 - claims needing softer wording

@@ -9,6 +9,10 @@ Use one entry per source.
   "year": 2025,
   "venue": "Venue or arXiv",
   "url": "https://...",
+  "pdf_url": "https://...",
+  "tags": ["personalization", "episodic-memory"],
+  "summary": "Two or three sentences.",
+  "bib": "@article{...}",
   "why_it_matters": "One or two sentences.",
   "supports": [
     "section or question 1",
@@ -28,3 +32,4 @@ Minimum rule:
 
 - do not keep a source without recording why it matters
 - do not keep a claim without at least one supporting source
+- do not mark a paper as full-text read without leaving a structured note
