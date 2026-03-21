@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 import subprocess
@@ -11,6 +12,10 @@ UNDEFINED_CITATION_PATTERNS = [
     re.compile(r"Citation [`'\"]([^`'\"]+)[`'\"] .* undefined", re.IGNORECASE),
     re.compile(r"I didn't find a database entry for \"([^\"]+)\"", re.IGNORECASE),
 ]
+
+LATEX_ERROR_PREFIX_RE = re.compile(r"^!\s+(.*)$")
+LINE_HINT_RE = re.compile(r"^l\.(\d+)\s*(.*)$")
+FILE_LINE_ERROR_RE = re.compile(r"^(.+?):(\d+):\s*(.+)$")
 
 
 def extract_citation_state_from_aux(aux_path: Path) -> tuple[set[str], set[str]]:
@@ -57,6 +62,48 @@ def extract_undefined_citations(text: str) -> list[str]:
     return sorted(keys)
 
 
+def extract_first_compile_error(text: str) -> dict[str, object] | None:
+    lines = text.splitlines()
+    for idx, raw in enumerate(lines):
+        line = raw.strip()
+        m_file = FILE_LINE_ERROR_RE.match(line)
+        if m_file:
+            return {
+                "message": m_file.group(3).strip(),
+                "file": m_file.group(1).strip(),
+                "line": int(m_file.group(2)),
+                "context": lines[max(0, idx - 1): min(len(lines), idx + 2)],
+            }
+
+        m = LATEX_ERROR_PREFIX_RE.match(line)
+        if not m:
+            continue
+        message = m.group(1).strip()
+        line_no = None
+        context = [raw]
+        for j in range(idx + 1, min(idx + 8, len(lines))):
+            context.append(lines[j])
+            hint = LINE_HINT_RE.match(lines[j].strip())
+            if hint:
+                line_no = int(hint.group(1))
+                break
+        return {
+            "message": message,
+            "line": line_no,
+            "context": context,
+        }
+    return None
+
+
+def write_compile_error_report(report_path: Path, error: dict[str, object] | None, main_tex: Path) -> None:
+    payload = {
+        "main_tex": str(main_tex),
+        "has_error": error is not None,
+        "first_error": error,
+    }
+    report_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def write_citation_gap_report(report_path: Path, keys: list[str], main_tex: Path) -> None:
     lines = [
         "# Citation Gaps",
@@ -95,6 +142,10 @@ def main() -> int:
     parser.add_argument("--main-tex", required=True, help="Path to main.tex")
     parser.add_argument("--log", required=True, help="Path to build log")
     parser.add_argument(
+        "--compile-error-report",
+        help="Path to write first compile error JSON; defaults to <main-tex-dir>/compile_error.json",
+    )
+    parser.add_argument(
         "--citation-gap-report",
         help="Path to write undefined citation report; defaults to <main-tex-dir>/citation_gaps.md",
     )
@@ -108,6 +159,11 @@ def main() -> int:
     main_tex = Path(args.main_tex).resolve()
     log_path = Path(args.log).resolve()
     work_dir = main_tex.parent
+    compile_error_report_path = (
+        Path(args.compile_error_report).resolve()
+        if args.compile_error_report
+        else (work_dir / "compile_error.json")
+    )
     gap_report_path = (
         Path(args.citation_gap_report).resolve()
         if args.citation_gap_report
@@ -116,6 +172,11 @@ def main() -> int:
     aux_path = main_tex.with_suffix(".aux")
 
     def finalize_compile(exit_code: int) -> int:
+        text = ""
+        if log_path.exists():
+            text = log_path.read_text(encoding="utf-8", errors="ignore")
+        write_compile_error_report(compile_error_report_path, extract_first_compile_error(text), main_tex)
+
         citations, bibcites = extract_citation_state_from_aux(aux_path)
         if citations:
             missing = sorted(citations - bibcites)
@@ -125,9 +186,8 @@ def main() -> int:
                 return 2
             return exit_code
 
-        if not log_path.exists():
+        if not text:
             return exit_code
-        text = log_path.read_text(encoding="utf-8", errors="ignore")
         missing = extract_undefined_citations(text)
         write_citation_gap_report(gap_report_path, missing, main_tex)
         if missing and not args.allow_undefined_citations:
@@ -146,6 +206,11 @@ def main() -> int:
 
     if not shutil.which("pdflatex"):
         log_path.write_text("No TeX compiler found. Install latexmk or pdflatex.", encoding="utf-8")
+        write_compile_error_report(
+            compile_error_report_path,
+            {"message": "No TeX compiler found. Install latexmk or pdflatex.", "line": None, "context": []},
+            main_tex,
+        )
         print("No TeX compiler found.")
         return 1
 
@@ -162,17 +227,20 @@ def main() -> int:
         )
 
     combined: list[str] = []
+    failed_code = 0
     for cmd in steps:
         result = subprocess.run(cmd, cwd=work_dir, capture_output=True, text=True)
         combined.append("$ " + " ".join(cmd))
         combined.append(result.stdout or "")
         combined.append(result.stderr or "")
         if result.returncode != 0:
-            log_path.write_text("\n".join(combined), encoding="utf-8")
-            print(f"Command failed: {' '.join(cmd)}")
-            return result.returncode
+            failed_code = result.returncode
+            break
 
     log_path.write_text("\n".join(combined), encoding="utf-8")
+    if failed_code != 0:
+        print(f"Command failed: see {log_path}")
+        return finalize_compile(failed_code)
     print("Compilation finished.")
     return finalize_compile(0)
 

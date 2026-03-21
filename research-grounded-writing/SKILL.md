@@ -55,6 +55,7 @@ For each subsection in a substantial survey, use this loop:
 6. critique the subsection for thinness, missing evidence, weak comparison, and unsupported claims
 7. if the subsection is still thin, run one supplemental retrieval pass using the gap revealed by the critique
 8. update the packet and rewrite the subsection
+9. run conformance and citation-whitelist checks before moving to full-document revision
 
 This is the main lesson to inherit from the strongest open-source systems:
 
@@ -70,6 +71,22 @@ When a local corpus is available, prefer using:
 
 Run it with a subsection-specific query before drafting important subsections.
 Store the strongest hits in the packet instead of relying only on memory or already-summarized notes.
+
+## Section packet contract
+
+For substantial writing, each `section_packets/<section-id>.md` should include:
+
+- subsection title
+- section goal
+- retrieval budget (`top_k_per_query`, `min_unique_sources`, `max_sibling_source_overlap_ratio`)
+- relevant notes
+- relevant source ids
+- key claims
+- caveats
+
+Use script initialization when packet count is large:
+
+- `scripts/init_section_packets.py`
 
 ## Subsection adequacy rule
 
@@ -109,6 +126,28 @@ Do not:
 - imply full coverage when the screened corpus is still incomplete
 - ignore an existing refined outline when writing a detailed report
 - skip local corpus retrieval for a thin analytical subsection when full-text paper folders are available
+
+## Coherence pass
+
+After subsection drafting, run one adjacency coherence pass:
+
+1. even-indexed subsections pass
+2. odd-indexed subsections pass
+
+Focus only on transitions, local redundancy, and contradiction carryover.
+Record edits in `coherence_edits.md`.
+
+## Structural checks
+
+Before final review, run:
+
+- `scripts/check_outline_conformance.py` to compare `refined_outline.md` and draft headings
+- `scripts/check_citation_whitelist.py` to ensure subsection citations stay inside packet evidence scope
+
+Recommended outputs:
+
+- `outline_conformance_report.md`
+- `citation_whitelist_report.md`
 
 ## Citation policy
 

@@ -25,6 +25,13 @@ Typical triggers:
 7. Remove redundancy and reorder for narrative flow.
 8. Produce a final outline that can drive section-level retrieval and writing.
 
+Use a four-stage artifact chain for substantial surveys:
+
+1. `rough_outlines.md` (or `rough_outline_a.md` + `rough_outline_b.md`)
+2. `merged_outline.md`
+3. `subsection_outline.md`
+4. `refined_outline.md`
+
 ## How detailed the outline should be
 
 For a substantial survey:
@@ -71,15 +78,18 @@ Typical natural sources of subsection boundaries:
 - Prefer section titles that encode clear distinctions.
 - If the task is a survey, make the outline reflect comparison axes, not just a chronological list.
 - If a subsection cannot be supported by distinct evidence, merge it or remove it.
+- Run outline lint before handing off to drafting for substantial reports.
 
 ## Recommended artifacts
 
-- `rough_outline_a.md`
-- `rough_outline_b.md`
+- `rough_outlines.md` or `rough_outline_a.md` + `rough_outline_b.md`
 - `outline_merge_notes.md`
+- `merged_outline.md`
+- `subsection_outline.md`
 - `draft_outline.md`
 - `refined_outline.md`
 - `section_evidence_index.md`
+- `outline_lint_report.md`
 
 ## Outline patterns
 
@@ -88,3 +98,16 @@ Read:
 - `references/outline_patterns.md`
 
 Use those patterns as heuristics, not as rigid templates.
+
+## Script
+
+Use:
+
+- `scripts/lint_outline.py`
+
+Typical check:
+
+- duplicate sibling headings
+- empty headings without body or children
+- insufficient subsections for top-level sections
+- sibling heading overlap risk

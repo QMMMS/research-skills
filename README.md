@@ -41,10 +41,11 @@ The full workflow is organized as:
 4. Create full-text paper notes and evidence maps
 5. Add a lightweight full-text retrieval layer over the local paper corpus
 6. Build a multi-level outline from clustered notes
-7. Create subsection evidence packets and draft grounded text
-8. Review for corpus adequacy, coverage, grounding, and structure
-9. Revise and optionally normalize citations ✍️
-10. Optionally export the final draft into LaTeX and PDF
+7. Run outline lint and initialize subsection evidence packets
+8. Draft grounded text subsection by subsection
+9. Run conformance and citation-whitelist checks, then review for corpus adequacy, coverage, grounding, and structure
+10. Revise with diff tracing and numeric quality gate ✍️
+11. Optionally export the final draft into LaTeX and PDF
 
 Each stage is also available as a standalone skill.
 
@@ -117,27 +118,45 @@ Each skill only requires a `SKILL.md` file to function. This repository also inc
 ### Phase 3: Evidence and structure
 
 - `evidence_map.json` or `evidence_map.md`
+- `rough_outlines.md`
+- `merged_outline.md`
+- `subsection_outline.md`
 - `draft_outline.md`
 - `refined_outline.md`
+- `outline_lint_report.md`
 - `section_evidence_index.md`
 - `corpus_queries/<query-id>.md`
 
 ### Phase 4: Writing and revision
 
 - `section_packets/<section-id>.md`
+- `draft_report_raw.md`
+- `draft_report_refined.md`
 - `draft_report.md`
 - `detailed_report.md`
+- `coherence_edits.md`
+- `citation_whitelist_report.md`
+- `outline_conformance_report.md`
 - `review_notes.md`
+- `revision_delta.md`
 - `revised_report.md`
+- `quality_gate.json`
 
 ### Phase 5: Publication export
 
 - `latex/main.tex`
 - `latex/references.bib`
 - `latex/build.log`
+- `latex/compile_error.json`
 - `latex/citation_gaps.md`
 - `latex/paragraph_citation_gaps.md`
 - `latex/main.pdf`
+
+### Run metadata
+
+- `run_manifest.json`
+- `state_manifest.json`
+- `artifact_validation_report.md`
 
 These names are suggestions, not hard requirements.
 
@@ -200,12 +219,24 @@ For a detailed survey report:
   - Convert source handles like `[@source-id]` into numeric citations.
 - `research-grounded-writing/scripts/render_references.py`
   - Render a Markdown references section from a JSON file.
+- `research-outline-synthesis/scripts/lint_outline.py`
+  - Lint refined outlines for duplicate headings, empty sections, and overlap risks.
+- `research-grounded-writing/scripts/init_section_packets.py`
+  - Initialize packet skeletons from `refined_outline.md` with retrieval budgets.
+- `research-grounded-writing/scripts/check_outline_conformance.py`
+  - Check heading-id conformance between outline and report.
+- `research-grounded-writing/scripts/check_citation_whitelist.py`
+  - Enforce subsection-level citation whitelists from packet evidence.
+- `research-review-and-revise/scripts/quality_gate_scorecard.py`
+  - Produce numeric quality gates (`coverage`, `structure`, `relevance`, citation precision/recall).
+- `research-survey-workflow/scripts/validate_artifacts.py`
+  - Validate phase artifacts and emit `state_manifest.json` for resumability.
 - `research-latex-export/scripts/export_markdown_to_latex.py`
   - Convert a Markdown research report into a LaTeX manuscript.
 - `research-latex-export/scripts/collect_bibtex.py`
   - Merge BibTeX entries from paper folders into `references.bib`.
 - `research-latex-export/scripts/compile_latex_project.py`
-  - Compile a generated LaTeX project with `latexmk` or `pdflatex`.
+  - Compile a generated LaTeX project with `latexmk` or `pdflatex`, and emit `compile_error.json`.
 - `research-latex-export/scripts/audit_paragraph_citations.py`
   - Flag long LaTeX paragraphs that do not include any citation command.
 

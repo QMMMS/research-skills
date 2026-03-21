@@ -34,21 +34,24 @@ Run the task in this order unless the user explicitly wants a subset:
 8. Add a lightweight local corpus retrieval layer over `papers/<paper-id>/...`.
 9. Build an `evidence_map.json` or equivalent section-wise evidence notes.
 10. Generate rough outlines from clustered notes.
-11. Expand the outline into a refined multi-level outline.
+11. Merge and expand into a refined multi-level outline.
 12. For each section and subsection, create a `section_packets/<section-id>.md` evidence packet.
 13. Run a local evidence retrieval pass against notes, metadata, and full-text corpus files, and record the result in the packet.
 14. Draft section-level content grounded in the retrieved evidence.
 15. Run a bounded critique pass on each section, retrieve supplemental evidence where needed, update the packet, and revise.
-16. Review the full draft for corpus adequacy, coverage, structure, citation support, and overclaiming.
-17. Revise the draft.
-18. Optionally normalize citations and render a references section.
-19. Optionally export the final draft into a LaTeX project and compile PDF with `research-latex-export`.
+16. Run structure/citation checks (`outline conformance`, `citation whitelist`) before full-draft merge.
+17. Review the full draft for corpus adequacy, coverage, structure, citation support, and overclaiming.
+18. Revise the draft and generate a revision delta.
+19. Generate a numeric quality gate scorecard before publication export.
+20. Optionally normalize citations and render a references section.
+21. Optionally export the final draft into a LaTeX project and compile PDF with `research-latex-export`.
 
 ## Required habits
 
 - Prefer explicit source-backed claims.
 - Separate drafting from review.
 - Keep intermediate artifacts on disk when the task is substantial.
+- Keep a run-level manifest and phase-level state manifest for resumability and audit.
 - Stop and surface major evidence gaps instead of hallucinating around them.
 - Ask for human judgment only at meaningful checkpoints, not after every micro-step.
 - Treat existing surveys as starting points, not as substitutes for reading primary papers.
@@ -97,25 +100,43 @@ When running the full workflow, try to leave behind:
 ### Phase 3: Evidence and structure
 
 - `evidence_map.json` or equivalent notes
+- `rough_outlines.md`
+- `merged_outline.md`
+- `subsection_outline.md`
 - `draft_outline.md`
 - `refined_outline.md`
+- `outline_lint_report.md`
 - `section_evidence_index.md`
 - `corpus_queries/<query-id>.md` when local corpus retrieval is material
 
 ### Phase 4: Writing and revision
 
 - `section_packets/<section-id>.md`
+- `draft_report_raw.md`
+- `draft_report_refined.md`
 - `draft_report.md`
 - `detailed_report.md`
+- `coherence_edits.md`
+- `citation_whitelist_report.md`
+- `outline_conformance_report.md`
 - `review_notes.md`
+- `revision_delta.md`
 - `revised_report.md`
+- `quality_gate.json`
 
 ### Phase 5: Publication export
 
 - `latex/main.tex`
 - `latex/references.bib`
 - `latex/build.log`
+- `latex/compile_error.json`
 - `latex/main.pdf`
+
+### Run metadata
+
+- `run_manifest.json`
+- `state_manifest.json`
+- `artifact_validation_report.md`
 
 ## Engineering defaults
 
@@ -155,3 +176,7 @@ If you need corpus layout and paper note templates, read:
 For lightweight full-text retrieval over the local paper corpus, use:
 
 - `../research-literature-curation/scripts/search_corpus.ps1`
+
+For artifact validation and resumability metadata, use:
+
+- `scripts/validate_artifacts.py`

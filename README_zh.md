@@ -39,10 +39,11 @@
 4. 为全文阅读论文建立结构化笔记和证据映射
 5. 在本地 paper folder 上增加一层轻量全文检索
 6. 从聚类后的笔记中生成多层提纲
-7. 为重要小节建立 `section_packets` 并写 grounded draft
-8. 审查语料充分性、coverage、grounding 与结构
-9. 修订，并在需要时清洗引用 ✍️
-10. 可选导出成 LaTeX 和 PDF
+7. 运行提纲 lint，并初始化 `section_packets`
+8. 按小节进行 grounded draft 写作
+9. 先做结构一致性与引用白名单检查，再审查 coverage、grounding 与结构
+10. 修订并产出差异记录与数值化质量门 ✍️
+11. 可选导出成 LaTeX 和 PDF
 
 每一阶段也都可以单独作为 skill 使用。
 
@@ -115,27 +116,45 @@ $CODEX_HOME/skills/
 ### 阶段 3：证据与结构
 
 - `evidence_map.json` 或 `evidence_map.md`
+- `rough_outlines.md`
+- `merged_outline.md`
+- `subsection_outline.md`
 - `draft_outline.md`
 - `refined_outline.md`
+- `outline_lint_report.md`
 - `section_evidence_index.md`
 - `corpus_queries/<query-id>.md`
 
 ### 阶段 4：写作与修订
 
 - `section_packets/<section-id>.md`
+- `draft_report_raw.md`
+- `draft_report_refined.md`
 - `draft_report.md`
 - `detailed_report.md`
+- `coherence_edits.md`
+- `citation_whitelist_report.md`
+- `outline_conformance_report.md`
 - `review_notes.md`
+- `revision_delta.md`
 - `revised_report.md`
+- `quality_gate.json`
 
 ### 阶段 5：出版导出
 
 - `latex/main.tex`
 - `latex/references.bib`
 - `latex/build.log`
+- `latex/compile_error.json`
 - `latex/citation_gaps.md`
 - `latex/paragraph_citation_gaps.md`
 - `latex/main.pdf`
+
+### 运行元数据
+
+- `run_manifest.json`
+- `state_manifest.json`
+- `artifact_validation_report.md`
 
 这些名称只是建议，不是强制要求。
 
@@ -198,12 +217,24 @@ $CODEX_HOME/skills/
   - 把 `[@source-id]` 这类引用占位替换成数字引用。
 - `research-grounded-writing/scripts/render_references.py`
   - 从 JSON 元数据生成 Markdown 参考文献列表。
+- `research-outline-synthesis/scripts/lint_outline.py`
+  - 对 refined outline 做重复标题、空小节和重叠风险检查。
+- `research-grounded-writing/scripts/init_section_packets.py`
+  - 从 `refined_outline.md` 批量初始化 section packet 模板与检索预算字段。
+- `research-grounded-writing/scripts/check_outline_conformance.py`
+  - 检查 `refined_outline.md` 与报告标题层级的一致性。
+- `research-grounded-writing/scripts/check_citation_whitelist.py`
+  - 检查每个小节是否只引用本小节 packet 白名单中的来源。
+- `research-review-and-revise/scripts/quality_gate_scorecard.py`
+  - 生成 coverage/structure/relevance/citation 的数值化质量门。
+- `research-survey-workflow/scripts/validate_artifacts.py`
+  - 校验分阶段产物并生成 `state_manifest.json`。
 - `research-latex-export/scripts/export_markdown_to_latex.py`
   - 把 Markdown 研究报告转换成 LaTeX 正文。
 - `research-latex-export/scripts/collect_bibtex.py`
   - 把 paper folder 里的 BibTeX 汇总成 `references.bib`。
 - `research-latex-export/scripts/compile_latex_project.py`
-  - 用 `latexmk` 或 `pdflatex` 编译生成的 LaTeX 项目。
+  - 用 `latexmk` 或 `pdflatex` 编译 LaTeX 项目，并输出 `compile_error.json`。
 - `research-latex-export/scripts/audit_paragraph_citations.py`
   - 标出较长但不含任何引用命令的 LaTeX 段落。
 

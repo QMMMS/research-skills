@@ -101,7 +101,8 @@ Optional supporting inputs:
 10. Run paragraph-level citation audit:
    - detect long uncited paragraphs
    - write `paragraph_citation_gaps.md`
-11. If unresolved citations remain, repair key mapping and recompile.
+11. Parse first LaTeX compile error into `compile_error.json` for deterministic repair loops.
+12. If unresolved citations remain, repair key mapping and recompile.
 
 ## Output contract
 
@@ -111,6 +112,7 @@ When this skill runs successfully, leave behind:
 - `latex/references.bib`
 - optionally `latex/main.pdf`
 - optionally `latex/build.log`
+- `latex/compile_error.json`
 - `latex/citation_gaps.md`
 - `latex/paragraph_citation_gaps.md`
 
@@ -146,6 +148,7 @@ The bundled default template lives in:
 - If BibTeX entries are duplicated, deduplicate by citation key and keep the first complete entry.
 - Build should not be considered successful when `citation_gaps.md` lists unresolved keys.
 - Build should not be considered structurally clean if headings appear as duplicated numbering patterns like `1.1.1 1.1 ...`.
+- Build should not be considered debuggable unless `compile_error.json` is generated when compilation fails.
 
 ## References
 

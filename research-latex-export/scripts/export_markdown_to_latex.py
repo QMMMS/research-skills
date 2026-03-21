@@ -13,7 +13,7 @@ HEADING_MAP = {
 }
 ARXIV_ID_RE = re.compile(r"^\d{4}\.\d{4,5}(v\d+)?$", re.IGNORECASE)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$")
-NUMBERED_HEADING_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)*\.?\s+")
+NUMBERED_HEADING_PREFIX_RE = re.compile(r"^(?:\d+(?:\.\d+)*\.?\s+)+")
 
 
 def to_safe_arxiv_key(value: str) -> str:

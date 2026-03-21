@@ -65,6 +65,7 @@ For each retained source, capture at least:
 Use the template in:
 
 - `references/source_inventory_template.md`
+- `references/source_policy_template.md`
 
 For papers selected for deep reading, create one folder per paper and store:
 
@@ -103,6 +104,22 @@ Build `evidence_map.json` or equivalent notes that connect:
 - caveats
 
 This skill should prepare later drafting, not only collect URLs.
+
+For reusable retrieval traces, prefer a stable per-query schema in `corpus_queries/<query-id>.md`:
+
+- retrieval_query
+- section_id or target_subsection
+- doc_id / paper_id
+- rank_before / rank_after (if rerank used)
+- score
+- support_span
+- used_in_claims
+
+Keep external retrieval controlled:
+
+- trigger only when critique flags a concrete evidence gap
+- deduplicate against local inventory before accepting new sources
+- mark each source with reliability tier from source policy
 
 ## Scripts
 
