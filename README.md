@@ -36,16 +36,18 @@ The result is a skill suite that stays usable without requiring a paper warehous
 The full workflow is organized as:
 
 1. Scope the topic and deliverable
-2. Read existing surveys and benchmark overviews first
-3. Build and screen a candidate corpus
-4. Create full-text paper notes and evidence maps
-5. Add a lightweight full-text retrieval layer over the local paper corpus
-6. Build a multi-level outline from clustered notes
-7. Run outline lint and initialize subsection evidence packets
-8. Draft grounded text subsection by subsection
-9. Run conformance and citation-whitelist checks, then review for corpus adequacy, coverage, grounding, and structure
-10. Revise with diff tracing and numeric quality gate ✍️
-11. Optionally export the final draft into LaTeX and PDF
+2. Declare source mode (`manual-gated` for CNKI-like access, `api-automated` for arXiv-like access)
+3. Stage A retrieval: read existing surveys and benchmark overviews first
+4. Stage B retrieval: run topic/keyword search and build candidate pools
+5. Build a candidate corpus and apply threshold-aware screening
+6. Create full-text paper notes and run notes-quality validation (template placeholders do not count)
+7. Add a lightweight full-text retrieval layer over the local paper corpus
+8. Build a multi-level outline from clustered notes
+9. Run outline lint and initialize subsection evidence packets
+10. Draft grounded subsection prose into `subsection_drafts/` first, then merge into report drafts
+11. Run conformance and citation-whitelist checks, then review for corpus adequacy, coverage, grounding, and structure
+12. Revise with diff tracing and numeric quality gate ✍️
+13. Optionally export the final draft into LaTeX and PDF
 
 Each stage is also available as a standalone skill.
 
@@ -103,6 +105,11 @@ Each skill only requires a `SKILL.md` file to function. This repository also inc
 
 - `topic_scope.md`
 - `research_questions.md`
+- `source_mode_decision.md`
+- `acquisition_plan.md`
+- `survey_query_pack.yaml`
+- `topic_query_pack.yaml`
+- `human_task_sheet.md` (for `manual-gated` source mode)
 - `existing_surveys.md`
 
 ### Phase 2: Corpus building
@@ -130,6 +137,7 @@ Each skill only requires a `SKILL.md` file to function. This repository also inc
 ### Phase 4: Writing and revision
 
 - `section_packets/<section-id>.md`
+- `subsection_drafts/<section-id>.md`
 - `draft_report_raw.md`
 - `draft_report_refined.md`
 - `draft_report.md`
@@ -168,6 +176,10 @@ This skill suite follows three defaults:
 2. Prefer a small script over a heavy service.
 3. Keep human review as an explicit checkpoint.
 
+Failure-handling rule:
+
+- If a required step cannot be satisfied (for example unreadable full text, failed CAJ/PDF decoding, or unresolved citation anchors), report the blocker first and do not silently continue as if the step succeeded.
+
 Accordingly, the core workflow works without:
 
 - a local paper vector database
@@ -184,6 +196,15 @@ For a substantial survey, a useful rule of thumb is:
 - full-text reading notes: `30-40+`
 
 These are practical workflow targets, not publication rules. If the topic is unusually narrow, record the reason for a smaller corpus.
+When source access is human-gated (for example CNKI), treat these numbers as recommendations only.
+
+Threshold-aware screening and citation floor:
+
+- if total collected records are `<15`, skip screening, include all, and prompt supplementation to at least `15`
+- if total collected records are `15-29`, skip screening and include all records
+- if total collected records are `>=30`, screening can be applied
+- if total collected records are `<30`, cite all included sources in the body text
+- if total collected records are `>=30` and screening is used, keep final body-text citations at `>=30` unique sources
 
 ## Outline heuristics
 
@@ -199,9 +220,13 @@ For a substantial survey:
 For a detailed survey report:
 
 - create a `section_packets/<section-id>.md` file before drafting important subsections
+- draft full subsection prose in `subsection_drafts/<section-id>.md` before global merge
 - retrieve evidence from both `notes.md` and the local full-text corpus under `papers/<paper-id>/src/`
 - leave reusable retrieval traces in `corpus_queries/<query-id>.md` when the search materially shapes a subsection
 - run one bounded supplemental retrieval pass for thin subsections instead of leaving placeholder prose
+- for analytical subsections, keep at least `2` paragraphs and at least `3` sentences per paragraph (recommended `5+`)
+- for analytical subsections, keep at least `2` unique citations (recommended `3+` for core argument subsections)
+- include explicit caveat or boundary-condition discussion, not only positive claims
 
 ## Included scripts
 
@@ -215,6 +240,8 @@ For a detailed survey report:
   - Download and extract arXiv source packages into each paper folder.
 - `research-literature-curation/scripts/search_corpus.ps1`
   - Search concept mentions across `notes.md`, `metadata.md`, and local full-text source files in `papers/`.
+- `research-literature-curation/scripts/validate_notes_quality.py`
+  - Validate that `papers/<paper-id>/notes.md` is substantive (not placeholders) and includes required sections/snippets.
 - `research-grounded-writing/scripts/normalize_citations.py`
   - Convert source handles like `[@source-id]` into numeric citations.
 - `research-grounded-writing/scripts/render_references.py`
@@ -227,6 +254,10 @@ For a detailed survey report:
   - Check heading-id conformance between outline and report.
 - `research-grounded-writing/scripts/check_citation_whitelist.py`
   - Enforce subsection-level citation whitelists from packet evidence.
+- `research-grounded-writing/scripts/validate_section_packets.py`
+  - Validate packet-set completeness against refined outline, detect placeholders, and optionally enforce language lock (`zh`/`en`).
+- `research-grounded-writing/scripts/validate_subsection_drafts.py`
+  - Validate subsection prose depth (`paragraph/sentence minimums`), citation density, and self-check completeness.
 - `research-review-and-revise/scripts/quality_gate_scorecard.py`
   - Produce numeric quality gates (`coverage`, `structure`, `relevance`, citation precision/recall).
 - `research-survey-workflow/scripts/validate_artifacts.py`
@@ -241,6 +272,12 @@ For a detailed survey report:
   - Flag long LaTeX paragraphs that do not include any citation command.
 
 These scripts are intentionally small and replaceable.
+
+## Practical lessons
+
+- Do not treat auto-generated packet templates as finished artifacts; validate and fill them before drafting.
+- Packet coverage should match the required outline depth, otherwise section-level grounding will be uneven.
+- For Chinese deliverables, keep packet explanatory fields primarily in Chinese to avoid language drift during drafting.
 
 ## Repository layout
 

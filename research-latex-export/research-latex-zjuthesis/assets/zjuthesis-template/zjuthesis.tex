@@ -1,0 +1,122 @@
+﻿% Sanitized demo entry for the bundled zjuthesis teaching template
+\documentclass[
+    PrintFilePath   = false,
+    TwoSide         = true,
+    StudentName     = 示例姓名,
+    StudentID       = 00000000,
+    AdvisorName     = 示例导师,
+    Grade           = 2026,
+    Major           = 示例专业,
+    Department      = 示例学院,
+    SubmitDate      = 2026年1月,
+    MajorFormat     = general,
+    Degree          = graduate,
+    Type            = thesis,
+    Period          = final,
+    BlindReview     = false,
+    Language        = chinese,
+    GradLevel       = master,
+    Topic           = 示例方向,
+    ColaboratorName = 示例合作导师,
+    ListOfContents  = true,
+    ListOfFigures   = false,
+    ListOfTables    = false,
+    ListOfAlgorithms= false,
+    Title           = 示例论文题目,
+    TitleEng        = {Sample Paper Title}
+]{zjuthesis}
+
+\renewcommand{\TitleTypeName}{课程论文示例模板}
+\renewcommand{\TitleTypeNameCover}{课程论文示例模板}
+
+\titletwolines{示例论文题目}{}
+\titleengtwolines{Sample Paper Title}{}
+
+\newcommand{\inputundergraduate}
+{
+    \ifthenelse{\equal{\Period}{final}}
+    {
+        \newcommand{\undergradcurrstage}{final}
+        \newrefsection
+        \coverstyle
+        \inputpage{final}{cover}
+        \prevstyle
+        \inputpage{final}{previous}
+        \inputpage{final}{toc}
+        \bodystyle
+        \inputpage{final}{cover-part}
+        \resetpagecounter{}
+        \inputbody{final/content}
+        \inputbody{final/post}
+        \poststyle
+        \inputpage{final}{post}
+        \renewcommand{\undergradcurrstage}{proposal}
+        \newrefsection
+        \coverstyle
+        \inputpage{proposal}{cover-part}
+        \inputpage{proposal}{cover}
+        \inputpage{proposal}{previous}
+        \bodystyle
+        \inputbody{proposal/content}
+        \poststyle
+        \inputpage{proposal}{post}
+    }
+
+    \ifthenelse{\equal{\Period}{proposal}}
+    {
+        \newcommand{\undergradcurrstage}{proposal}
+        \coverstyle
+        \inputpage{proposal}{cover}
+        \inputpage{proposal}{previous}
+        \prevstyle
+        \inputpage{proposal}{toc}
+        \bodystyle
+        \inputbody{proposal/content}
+        \poststyle
+        \inputpage{proposal}{post}
+    }
+
+    \ifthenelse{\equal{\Period}{paper}}
+    {
+        \newcommand{\undergradcurrstage}{paper}
+        \newrefsection
+        \coverstyle
+        \inputpage{final}{cover}
+        \prevstyle
+        \inputpage{final}{previous}
+        \inputpage{final}{toc}
+        \bodystyle
+        \inputpage{final}{cover-part}
+        \cleardoublepage
+        \inputbody{final/content}
+        \inputbody{final/post}
+        \poststyle
+        \inputpage{final}{post}
+    }
+}
+
+\newcommand{\inputgraduate}
+{
+    \coverstyle
+    \inputpage{cover}
+    \prevstyle
+    \inputpage{previous}
+    \inputpage{toc}
+    \bodystyle
+    \inputbody{content}
+    \poststyle
+    \inputbody{post}
+}
+
+\begin{document}
+
+\ifthenelse{\equal{\Degree}{undergraduate}}
+{
+    \inputundergraduate{}
+}
+{
+    \inputgraduate{}
+}
+\end{document}
+
+

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import re
@@ -12,8 +12,20 @@ HEADING_MAP = {
     4: "paragraph",
 }
 ARXIV_ID_RE = re.compile(r"^\d{4}\.\d{4,5}(v\d+)?$", re.IGNORECASE)
-HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$")
+HEADING_RE = re.compile(r"^\ufeff?\s*(#{1,6})\s+(.+)$")
 NUMBERED_HEADING_PREFIX_RE = re.compile(r"^(?:\d+(?:\.\d+)*\.?\s+)+")
+WORKFLOW_PHRASES = [
+    "section packet",
+    "subsection draft",
+    "文献样本采用已收集",
+    "本次语料库",
+    "按本流程",
+    "实现全样本覆盖引用",
+]
+
+
+def sanitize_markdown(markdown: str) -> str:
+    return markdown.replace("\ufeff", "").replace("\r\n", "\n")
 
 
 def to_safe_arxiv_key(value: str) -> str:
@@ -92,7 +104,6 @@ def convert_inline(text: str) -> str:
                 key = key[1:]
             if key.lower().startswith("arxiv:"):
                 key = key.split(":", 1)[1].strip()
-            # Normalize bare arXiv IDs into BibTeX-safe keys.
             if ARXIV_ID_RE.match(key):
                 key = to_safe_arxiv_key(key)
             if key:
@@ -107,8 +118,9 @@ def convert_inline(text: str) -> str:
     def save_italic(match: re.Match[str]) -> str:
         return store(r"\emph{" + escape_text(match.group(1)) + "}")
 
-    text = re.sub(r"`([^`]+)`", save_code, text)
+    text = re.sub(r"`\s*(\[@[^\]]+\])\s*`", r"\1", text)
     text = re.sub(r"\[@([^\]]+)\]", save_citation, text)
+    text = re.sub(r"`([^`]+)`", save_code, text)
     text = re.sub(r"\*\*([^*]+)\*\*", save_bold, text)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", save_italic, text)
     text = escape_text(text)
@@ -209,6 +221,40 @@ def markdown_to_latex(markdown: str, title: str = "") -> str:
     return "\n".join(out).strip() + "\n"
 
 
+def audit_markdown(markdown: str) -> list[str]:
+    findings: list[str] = []
+    intro_match = re.search(r"(?ms)^##\s+1\.\s*引言\s*$([\s\S]*?)(?=^##\s+|\Z)", markdown)
+    if intro_match and re.search(r"(?m)^\s*#{3,6}\s+", intro_match.group(1)):
+        findings.append("发现引言内部仍有三级及以下标题；最终论文中的引言应改为连续正文段落。")
+    for phrase in WORKFLOW_PHRASES:
+        if phrase in markdown:
+            findings.append(f"发现流程化表述：{phrase}")
+    return findings
+
+
+def audit_rendered_tex(rendered: str) -> list[str]:
+    findings: list[str] = []
+    if re.search(r"(?m)^\\#", rendered):
+        findings.append("LaTeX 正文中仍残留原始 Markdown 标题。")
+    if "[@" in rendered:
+        findings.append("LaTeX 正文中仍存在未转换的引用标记 [@... ]。")
+    for phrase in WORKFLOW_PHRASES:
+        if phrase in rendered:
+            findings.append(f"LaTeX 正文中仍出现流程化表述：{phrase}")
+    return findings
+
+
+def write_audit_report(path: Path, findings: list[str]) -> None:
+    lines = ["# Export Audit", ""]
+    if findings:
+        lines.append("## Findings")
+        lines.append("")
+        lines.extend(f"- {item}" for item in findings)
+    else:
+        lines.append("No findings.")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export a Markdown research report into LaTeX.")
     parser.add_argument("--input", required=True, help="Input Markdown file")
@@ -217,13 +263,15 @@ def main() -> int:
     parser.add_argument("--title", default="Research Survey Draft", help="Document title")
     parser.add_argument("--author", default="Codex", help="Document author")
     parser.add_argument("--abstract", default="This draft was exported from a structured research-writing workflow.", help="Abstract text")
+    parser.add_argument("--audit-output", help="Optional Markdown audit report path")
     args = parser.parse_args()
 
     input_path = Path(args.input)
     output_path = Path(args.output)
     template_path = Path(args.template)
 
-    markdown = input_path.read_text(encoding="utf-8")
+    markdown = sanitize_markdown(input_path.read_text(encoding="utf-8"))
+    markdown_findings = audit_markdown(markdown)
     body = markdown_to_latex(markdown, title=args.title)
     template = template_path.read_text(encoding="utf-8")
     rendered = (
@@ -232,9 +280,16 @@ def main() -> int:
         .replace("<<ABSTRACT>>", escape_text(args.abstract))
         .replace("<<BODY>>", body)
     )
+    tex_findings = audit_rendered_tex(rendered)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(rendered, encoding="utf-8")
+
+    if args.audit_output:
+        audit_path = Path(args.audit_output)
+        audit_path.parent.mkdir(parents=True, exist_ok=True)
+        write_audit_report(audit_path, markdown_findings + tex_findings)
+
     print(f"Wrote LaTeX manuscript to {output_path}")
     return 0
 

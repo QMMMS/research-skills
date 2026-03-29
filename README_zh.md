@@ -34,16 +34,18 @@
 完整流程大致分为：
 
 1. 明确主题边界与交付物
-2. 先阅读已有综述、教程或 benchmark overview
-3. 构建并筛选候选论文池
-4. 为全文阅读论文建立结构化笔记和证据映射
-5. 在本地 paper folder 上增加一层轻量全文检索
-6. 从聚类后的笔记中生成多层提纲
-7. 运行提纲 lint，并初始化 `section_packets`
-8. 按小节进行 grounded draft 写作
-9. 先做结构一致性与引用白名单检查，再审查 coverage、grounding 与结构
-10. 修订并产出差异记录与数值化质量门 ✍️
-11. 可选导出成 LaTeX 和 PDF
+2. 先声明数据源模式（`manual-gated` 例如知网，`api-automated` 例如 arXiv）
+3. 阶段 A：先检索综述/教程/benchmark overview
+4. 阶段 B：再做主题词/关键词检索并构建候选池
+5. 构建并筛选候选论文池
+6. 为全文阅读论文建立结构化笔记和证据映射
+7. 在本地 paper folder 上增加一层轻量全文检索
+8. 从聚类后的笔记中生成多层提纲
+9. 运行提纲 lint，并初始化 `section_packets`
+10. 按小节进行 grounded draft 写作
+11. 先做结构一致性与引用白名单检查，再审查 coverage、grounding 与结构
+12. 修订并产出差异记录与数值化质量门 ✍️
+13. 可选导出成 LaTeX 和 PDF
 
 每一阶段也都可以单独作为 skill 使用。
 
@@ -101,6 +103,11 @@ $CODEX_HOME/skills/
 
 - `topic_scope.md`
 - `research_questions.md`
+- `source_mode_decision.md`
+- `acquisition_plan.md`
+- `survey_query_pack.yaml`
+- `topic_query_pack.yaml`
+- `human_task_sheet.md`（当数据源模式为 `manual-gated` 时）
 - `existing_surveys.md`
 
 ### 阶段 2：语料构建
@@ -182,6 +189,7 @@ $CODEX_HOME/skills/
 - 全文结构化笔记：`30-40+`
 
 这是工作流上的经验值，不是出版规则。如果主题本身非常窄，应记录原因，而不是假装文献规模足够大。
+如果数据源受人工访问限制（例如知网），这些数量应视为建议值，不是强制要求。
 
 ## 提纲深度经验值
 
